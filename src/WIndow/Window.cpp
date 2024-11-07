@@ -1,6 +1,6 @@
-#include <Window.h>
+#include "Window.h"
 
-#include "iostream"
+#include <iostream>
 
 bool initSDL(SDL_Window*& window, SDL_Renderer*& renderer) {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {

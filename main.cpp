@@ -1,5 +1,7 @@
 #include <SDL2/SDL.h>
-#include <Window.h>
+
+#include "Circle.h"
+#include "Window/Window.h"
 
 int main(int argc, char* argv[]) {
   // Initialize SDL with video subsystem
@@ -12,6 +14,8 @@ int main(int argc, char* argv[]) {
   SDL_Event e;
   bool quit = false;
 
+  initializeCircles(10);
+
   while (!quit) {
     // Check for events
     while (SDL_PollEvent(&e) != 0) {
@@ -20,12 +24,15 @@ int main(int argc, char* argv[]) {
         quit = true;
       }
     }
-    // Main loop
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);  // Black color
+    // Clear the screen with black color
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
-    SDL_RenderPresent(renderer);
+    // Circle loop
+    CircleLoop(renderer);
 
+    SDL_RenderPresent(renderer);
+    // FrameRate set to 60fps
     SDL_Delay(16);
   }
 
