@@ -1,84 +1,114 @@
 #include "Circle.h"
 
-// Define the functions
-
-void draw(SDL_Renderer* renderer, int cx, int cy, int radius) {
-  // Set draw color to white
-  SDL_SetRenderDrawColor(renderer, 250, 5, 5, 0);  // RGBA
-
-  // Midpoint Circle Algorithm
-  int x = radius;
-  int y = 0;
-  int MidPoint =
-      1 - x;  // Decision criterion divided by 2 evaluated at x=r, y=0
-
-  while (y <= x) {
-    // Draw horizontal lines to fill the circle
-    SDL_RenderDrawLine(renderer, cx - x, cy + y, cx + x, cy + y);
-    SDL_RenderDrawLine(renderer, cx - y, cy + x, cx + y, cy + x);
-    SDL_RenderDrawLine(renderer, cx - x, cy - y, cx + x, cy - y);
-    SDL_RenderDrawLine(renderer, cx - y, cy - x, cx + y, cy - x);
-
-    y++;
-    // Inside
-    if (MidPoint <= 0) {
-      MidPoint += 2 * y + 1;  // Change in decision criterion for y -> y+1
-    } else
-    // Outside
-    {
-      x--;
-      MidPoint += 2 * (y - x) + 1;  // Change for y -> y+1, x -> x-1
-    }
-  }
-}
-
 #include <cmath>
 #include <iostream>
 #include <random>
 #include <vector>
 
+#include "Shapes/ShapeDraw.h"
+
 // Create a random number generator
-std::random_device rd;   // Seed
-std::mt19937 gen(rd());  // Standard mersenne_twister_engine
+std::random_device rd;
+std::mt19937 gen(rd());
 std::uniform_int_distribution<> dis(0, 999);
 
-// Define a Circle struct
 struct Circle {
-  float Currentx;
-  float Currenty;
-  float Targetx;  // Change to float for consistency
-  float Targety;  // Change to float for consistency
+  float Currentx;  // This is the current circles location
+  float Currenty;  // This is the current circles location
+  float VelocityY;
+  float VelocityX;
 };
+const float Gravity = 9.8f;
 
-std::vector<Circle> circles;
+static std::vector<Circle> circles;
 
 // Initialize 10 circles
 void initializeCircles(int numCircles) {
   std::cout << "ran";
   for (int i = 0; i < numCircles; ++i) {
-    circles.push_back(
-        {static_cast<float>(dis(gen)), static_cast<float>(dis(gen)),
-         static_cast<float>(dis(gen)), static_cast<float>(dis(gen))});
+    circles.push_back({
+        static_cast<float>(dis(gen)),
+        static_cast<float>(dis(gen)),
+        0,
+        50,
+    });
   }
 }
 
-int test = 69;
+void SubStep(Circle& circle) {
+  for (int i = 0; i < circles.size(); i++) {
+    if (&circle == &circles[i]) continue;
+
+    float dx = circle.Currentx - circles[i].Currentx;
+    float dy = circle.Currenty - circles[i].Currenty;
+    float Distance = sqrt(dx * dx + dy * dy);
+    float CombinedRadius = 10 + 10;
+    if (Distance <= CombinedRadius || circle.Currentx <= 0 ||
+        circle.Currentx >= 1000 || circle.Currenty <= 0 ||
+        circle.Currenty >= 1000) {
+      // Collision detected
+      // Calculate the normal vector
+      float nx = dx / Distance;
+      float ny = dy / Distance;
+
+      // Calculate the relative velocity
+      float relativeVelocityX = circle.VelocityX - circles[i].VelocityX;
+      float relativeVelocityY = circle.VelocityY - circles[i].VelocityY;
+
+      // Calculate the relative velocity in terms of the normal direction
+      float dotProduct = relativeVelocityX * nx + relativeVelocityY * ny;
+
+      // Do not resolve if velocities are separating
+      if (dotProduct > 0) {
+        continue;
+      }
+
+      // Calculate the impulse for both circles
+      float impulse = (2.0f * dotProduct) / (1 + 1);
+
+      // Apply the impulse
+      circle.VelocityX -= impulse * 1 * nx;
+      circle.VelocityY -= impulse * 1 * ny;
+      circle.Currentx += nx;
+      circle.Currenty += ny;
+    }
+  }
+}
+
+void WindowDetection(Circle& circle, int WindowWidth, int WindowHeight) {
+  float radius = 10.0f;
+  if (circle.Currentx - radius < 0) {
+    circle.Currentx = radius;
+    circle.VelocityX *= -1;
+  } else if (circle.Currentx + radius > WindowWidth) {
+    circle.Currentx = WindowWidth - radius;
+    circle.VelocityX *= -1;
+  }
+
+  if (circle.Currenty - radius < 0) {
+    circle.Currenty = radius;
+    circle.VelocityY *= -1;
+  } else if (circle.Currenty + radius > WindowHeight) {
+    circle.Currenty = WindowHeight - radius;
+    circle.VelocityY *= -1;
+  }
+}
 
 // Update the circle's position
-void CircleLoop(SDL_Renderer* renderer) {
+void CircleLoop(SDL_Renderer* renderer, float TimeFrame, SDL_Window* window) {
+  int WindowWidth, WindowHeight;
+  SDL_GetWindowSize(window, &WindowWidth, &WindowHeight);
   for (int i = 0; i < circles.size(); i++) {
-    float dx = circles[i].Targetx - circles[i].Currentx;
-    float dy = circles[i].Targety - circles[i].Currenty;
-    float Distance = sqrt(dx * dx + dy * dy);
+    WindowDetection(circles[i], WindowWidth, WindowHeight);
+    SubStep(circles[i]);
 
-    draw(renderer, circles[i].Currentx, circles[i].Currenty, 25);
-    if (Distance < 10) {
-      circles[i].Targetx = static_cast<float>(dis(gen));
-      circles[i].Targety = static_cast<float>(dis(gen));
-    } else {
-      float lerp = 0.03;  // Temporarily increased lerp value for testing
-      circles[i].Currentx += dx * lerp;
-      circles[i].Currenty += dy * lerp;
-    }
+    // Apply gravity based on vertical velocity and time
+    circles[i].VelocityY += Gravity * TimeFrame;
+
+    // Update the circle's position based on velocity and time
+    circles[i].Currentx += circles[i].VelocityX * TimeFrame;
+    circles[i].Currenty += circles[i].VelocityY * TimeFrame;
+
+    draw(renderer, circles[i].Currentx, circles[i].Currenty, 10);
   }
 }

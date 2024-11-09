@@ -6,7 +6,7 @@ CXXFLAGS := -I SDL/include -I src -L SDL/lib
 LIBS := -lmingw32 -lSDL2main -lSDL2
 
 # Source files
-SRC := main.cpp src/Window/Window.cpp src/Circle.cpp
+SRC := main.cpp src/Window/Window.cpp src/Circle.cpp src/Shapes/ShapeDraw.cpp
 
 # Output executable
 OUT := main

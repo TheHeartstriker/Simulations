@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
     SDL_RenderClear(renderer);
 
     // Circle loop
-    CircleLoop(renderer);
+    CircleLoop(renderer, 0.1f, window);
 
     SDL_RenderPresent(renderer);
     // FrameRate set to 60fps
