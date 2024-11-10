@@ -2,6 +2,8 @@
 
 #include "Circle.h"
 #include "Window/Window.h"
+int MouseX = -1;
+int MouseY = -1;
 
 int main(int argc, char* argv[]) {
   // Initialize SDL with video subsystem
@@ -22,6 +24,16 @@ int main(int argc, char* argv[]) {
       // User requests quit
       if (e.type == SDL_QUIT) {
         quit = true;
+      } else if (e.type == SDL_MOUSEBUTTONDOWN) {
+        // Get the mouse offsets
+        SDL_GetMouseState(&MouseX, &MouseY);
+      } else if (e.type == SDL_MOUSEBUTTONUP) {
+        MouseX = -1;
+        MouseY = -1;
+      } else if (e.type == SDL_MOUSEMOTION &&
+                 (e.motion.state & SDL_BUTTON(SDL_BUTTON_LEFT))) {
+        // Update the mouse offsets while the left mouse button is held down
+        SDL_GetMouseState(&MouseX, &MouseY);
       }
     }
     // Clear the screen with black color
